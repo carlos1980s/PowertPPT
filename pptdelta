@@ -1,0 +1,17 @@
+# add data labels to chart
+series = chart.series[0]
+for i, point in enumerate(series.points):
+    value = point.data_label.text_frame.text
+    if value:
+        value = float(value.replace(',', ''))
+        if i > 0:
+            previous_value = float(series.points[i-1].data_label.text_frame.text.replace(',', ''))
+            diff = value - previous_value
+            if diff > 0:
+                run = point.data_label.text_frame.add_paragraph().add_run()
+                run.text = '▲'
+                run.font.color.theme_color = 'Accent 1'
+            elif diff < 0:
+                run = point.data_label.text_frame.add_paragraph().add_run()
+                run.text = '▼'
+                run.font.color.theme_color = 'Accent 2'
