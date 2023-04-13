@@ -1,0 +1,52 @@
+import pandas as pd
+from pptx import Presentation
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE
+from pptx.enum.dml import MSO_THEME_COLOR_INDEX
+from pptx.util import Cm
+
+# create sample data
+data = {
+    'Month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    'Sales': [10000, 12000, 15000, 18000, 20000, 22000, 25000, 27000, 30000, 35000, 40000, 45000]
+}
+df = pd.DataFrame(data)
+
+# create presentation
+prs = Presentation()
+
+# create slide with chart
+slide = prs.slides.add_slide(prs.slide_layouts[5])
+left, top, width, height = Cm(2), Cm(5), Cm(24), Cm(10)
+chart_data = CategoryChartData()
+
+# add data to chart
+chart_data.categories = df['Month']
+chart_data.add_series('Sales', df['Sales'])
+
+# add chart to slide
+chart = slide.shapes.add_chart(XL_CHART_TYPE.LINE, left, top, width, height, chart_data).chart
+
+# add data labels to chart
+series = chart.series[0]
+series.data_labels.number_format = 'General'
+sales_values = df['Sales'].tolist()
+
+# add deltas to data labels
+for i, point in enumerate(series.points):
+    point.data_label.text_frame.clear()
+    run = point.data_label.text_frame.paragraphs[0].add_run()
+    run.text = f"{df['Month'][i]} {sales_values[i]}"
+    if i > 0:
+        diff = sales_values[i] - sales_values[i-1]
+        if diff > 0:
+            run = point.data_label.text_frame.add_paragraph().add_run()
+            run.text = f'▲ {diff}'
+            run.font.color.theme_color = MSO_THEME_COLOR_INDEX.ACCENT_1
+        elif diff < 0:
+            run = point.data_label.text_frame.add_paragraph().add_run()
+            run.text = f'▼ {-diff}'
+            run.font.color.theme_color = MSO_THEME_COLOR_INDEX.ACCENT_2
+
+# save presentation
+prs.save('sales2.pptx')
